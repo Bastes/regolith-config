@@ -1,0 +1,2 @@
+## Modify // Move Window to Next Screen // <> \ ##
+bindsym $mod+backslash move container to output next; focus output next

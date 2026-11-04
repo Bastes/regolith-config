@@ -1,0 +1,4 @@
+## Modify // Rotate Windows Forward // <> ] ##
+bindsym $mod+bracketright exec --no-startup-id ~/.config/regolith3/scripts/rotate-windows forward
+## Modify // Rotate Windows Backward // <> [ ##
+bindsym $mod+bracketleft exec --no-startup-id ~/.config/regolith3/scripts/rotate-windows backward

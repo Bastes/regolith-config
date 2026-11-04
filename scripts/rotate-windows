@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Rotate the positions of tiled windows on the focused i3 workspace.
+# Usage: rotate-windows [forward|backward]   (default: forward)
+#   forward:  every window moves to the next slot, last wraps to first
+#   backward: every window moves to the previous slot, first wraps to last
+set -euo pipefail
+
+direction="${1:-forward}"
+
+# Tiled leaf windows of the focused workspace, in tree (layout) order.
+# Only .nodes is walked (never .floating_nodes), so floating windows stay put.
+mapfile -t ids < <(
+  i3-msg -t get_tree | jq -r '
+    def leaves:
+      if (.nodes | length) == 0 then select(.window != null)
+      else .nodes[] | leaves end;
+    first(.. | objects
+          | select(.type == "workspace" and any(.. | objects; .focused? == true)))
+    | leaves | .id'
+)
+
+n=${#ids[@]}
+(( n < 2 )) && exit 0
+
+cmds=()
+if [[ "$direction" == "forward" ]]; then
+  # Carry the last window down to slot 0: each window shifts one slot forward.
+  last=${ids[n-1]}
+  for (( i = n - 2; i >= 0; i-- )); do
+    cmds+=("[con_id=$last] swap container with con_id ${ids[i]}")
+  done
+else
+  # Carry the first window up to the last slot: each window shifts one slot back.
+  first=${ids[0]}
+  for (( i = 1; i < n; i++ )); do
+    cmds+=("[con_id=$first] swap container with con_id ${ids[i]}")
+  done
+fi
+
+i3-msg -q "$(IFS=';'; echo "${cmds[*]}")"
